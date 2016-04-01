@@ -6,6 +6,7 @@ import com.google.bigtable.v1.RowSet;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.ServiceException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,7 +50,17 @@ public class Table {
     return results;
   }
 
-  public
+  public RowScanner scanRows(RowRange rowRange, ReadOptions readOptions) {
+    Builder builder = ReadRowsRequest.newBuilder().setRowRange(rowRange.toProto());
+    ResultScanner<com.google.bigtable.v1.Row> scanner = dataClient.readRows(builder.build());
+    return new RowScanner(scanner);
+  }
 
-
+  public void applyMutation(Mutation mutation) throws BigtableServiceException {
+    try {
+      dataClient.mutateRow(mutation.toProto());
+    } catch (ServiceException e) {
+      throw new BigtableServiceException(e.getMessage(), e);
+    }
+  }
 }
